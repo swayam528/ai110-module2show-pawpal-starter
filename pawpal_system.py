@@ -61,6 +61,7 @@ class Scheduler:
         self.pet = pet
         self.tasks: list[Task] = []
         self.schedule: list[ScheduledTask] = []
+        self.excluded: list[ScheduledTask] = []
 
     def add_task(self, task: Task) -> None:
         pass
