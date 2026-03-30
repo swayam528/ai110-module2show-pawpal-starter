@@ -124,8 +124,11 @@ Three gaps were found during the design review, before any implementation:
 
 **b. Tradeoffs**
 
-- Describe one tradeoff your scheduler makes.
-- Why is that tradeoff reasonable for this scenario?
+**Tradeoff: exact-time conflict matching instead of overlap detection.**
+
+`get_conflicts()` flags two tasks as conflicting only when their `time` fields are an exact string match (e.g., both set to `"08:00"`). It does *not* detect partial overlaps — for example, a 30-minute task starting at `"08:00"` and a 15-minute task starting at `"08:20"` would collide in real life but pass the check undetected.
+
+This is a reasonable tradeoff for a simple daily planner for two reasons. First, most pet-care tasks are assigned to coarse time slots (morning, afternoon, evening) rather than precise minute-level windows, so exact-time clashes are the most common and actionable conflicts a pet owner would actually encounter. Second, full interval-overlap detection would require converting every task's start time and duration into an interval, then comparing every pair — O(n²) logic that adds code complexity without meaningful benefit at the scale of a handful of daily tasks. If the app were extended to support calendar-style scheduling with precise durations, interval arithmetic would be worth adding.
 
 ---
 
