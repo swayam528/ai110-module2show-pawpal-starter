@@ -10,11 +10,8 @@ st.title("🐾 PawPal+")
 # ---------------------------------------------------------------------------
 
 if "owner" not in st.session_state:
-    default_owner = Owner(name="Jordan", available_minutes_per_day=90)
-    default_pet   = Pet(name="Mochi", species="dog", age=3)
-    default_owner.add_pet(default_pet)
-    st.session_state.owner     = default_owner
-    st.session_state.pets      = {"Mochi": default_pet}
+    st.session_state.owner     = Owner(name="", available_minutes_per_day=90)
+    st.session_state.pets      = {}
     st.session_state.scheduler = None
 
 # ---------------------------------------------------------------------------
@@ -24,7 +21,8 @@ if "owner" not in st.session_state:
 st.subheader("Owner Profile")
 
 with st.form("profile_form"):
-    owner_name    = st.text_input("Your name", value=st.session_state.owner.name)
+    owner_name    = st.text_input("Your name", value=st.session_state.owner.name,
+                                  placeholder="e.g. Jordan")
     available_min = st.number_input(
         "Time available today (minutes)",
         min_value=10, max_value=480,
@@ -33,10 +31,14 @@ with st.form("profile_form"):
     save_profile = st.form_submit_button("Save profile")
 
 if save_profile:
-    st.session_state.owner.name                    = owner_name
-    st.session_state.owner.available_minutes_per_day = int(available_min)
-    st.session_state.scheduler = None
-    st.success(f"Profile updated: {owner_name}, {int(available_min)} min/day.")
+    name = owner_name.strip()
+    if not name:
+        st.error("Please enter your name.")
+    else:
+        st.session_state.owner.name                     = name
+        st.session_state.owner.available_minutes_per_day = int(available_min)
+        st.session_state.scheduler = None
+        st.success(f"Profile saved: {name}, {int(available_min)} min/day.")
 
 # ---------------------------------------------------------------------------
 # Section 1b: Add a pet

@@ -34,16 +34,16 @@ pip install -r requirements.txt
 
 ## Features
 
-| Feature | Description |
-|---|---|
-| **Multi-pet support** | Register any number of pets under one owner; each pet has its own task list |
-| **Task management** | Add tasks with title, duration, priority (high/medium/low), category, frequency, preferred time of day, and a specific HH:MM start time |
-| **Sorting by time** | All tasks are displayed in chronological order using a lambda key that converts HH:MM strings to minutes-since-midnight for correct numeric comparison |
-| **Filtering** | Filter the task list by pet name and/or completion status (pending / completed) |
-| **Daily schedule generation** | Greedy scheduler fits pending tasks within the owner's daily time budget, ordered by preferred time slot → priority → title |
-| **Conflict warnings** | Detects same-time collisions, duplicate task categories per pet, and budget overflow — shown as colour-coded alerts before schedule generation |
-| **Recurring tasks** | Marking a daily task done auto-creates the next occurrence for tomorrow; weekly tasks reappear in 7 days; one-off tasks simply close out |
-| **Deferred task report** | Tasks that don't fit in the budget are listed separately with the reason they were skipped |
+| Feature                       | Description                                                                                                                                            |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Multi-pet support**         | Register any number of pets under one owner; each pet has its own task list                                                                            |
+| **Task management**           | Add tasks with title, duration, priority (high/medium/low), category, frequency, preferred time of day, and a specific HH:MM start time                |
+| **Sorting by time**           | All tasks are displayed in chronological order using a lambda key that converts HH:MM strings to minutes-since-midnight for correct numeric comparison |
+| **Filtering**                 | Filter the task list by pet name and/or completion status (pending / completed)                                                                        |
+| **Daily schedule generation** | Greedy scheduler fits pending tasks within the owner's daily time budget, ordered by preferred time slot → priority → title                            |
+| **Conflict warnings**         | Detects same-time collisions, duplicate task categories per pet, and budget overflow — shown as colour-coded alerts before schedule generation         |
+| **Recurring tasks**           | Marking a daily task done auto-creates the next occurrence for tomorrow; weekly tasks reappear in 7 days; one-off tasks simply close out               |
+| **Deferred task report**      | Tasks that don't fit in the budget are listed separately with the reason they were skipped                                                             |
 
 ## Smarter Scheduling
 
@@ -67,15 +67,20 @@ python -m pytest
 
 The suite contains **21 tests** across five areas:
 
-| Area | What is verified |
-|---|---|
-| Task / Pet basics | `mark_complete()` sets `completed=True`; `add_task()` grows the task list |
-| Sorting | Tasks added out of order are returned chronologically; same-hour tasks sort by minute; empty list is handled |
-| Filtering | `filter_tasks()` isolates by pet name, by pending status, by completed status, and returns nothing for a pet with no tasks |
-| Recurring tasks | Daily tasks get a next-day occurrence; weekly tasks get a next-week occurrence; `as-needed` tasks produce no successor; the new task inherits all fields and starts incomplete |
+| Area               | What is verified                                                                                                                                                                    |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Task / Pet basics  | `mark_complete()` sets `completed=True`; `add_task()` grows the task list                                                                                                           |
+| Sorting            | Tasks added out of order are returned chronologically; same-hour tasks sort by minute; empty list is handled                                                                        |
+| Filtering          | `filter_tasks()` isolates by pet name, by pending status, by completed status, and returns nothing for a pet with no tasks                                                          |
+| Recurring tasks    | Daily tasks get a next-day occurrence; weekly tasks get a next-week occurrence; `as-needed` tasks produce no successor; the new task inherits all fields and starts incomplete      |
 | Conflict detection | Same-time collisions are flagged; different times produce no warning; duplicate categories are caught; budget overflow is caught; completed tasks are excluded from conflict checks |
 
 **Confidence level: ★★★★☆** — all happy paths and the most likely edge cases are covered. Interval-overlap detection (e.g. a 30-min task at 08:00 overlapping a task at 08:20) and multi-pet scheduling edge cases would be the next things to add.
+
+### DEMO
+
+<a href="image1.png" target="_blank"><img src='image1.png' title='PawPal App' width='' alt='PawPal App' class='center-block' /></a>
+<a href="image2.png" target="_blank"><img src='image2.png' title='PawPal App' width='' alt='PawPal App' class='center-block' /></a>
 
 ### Suggested workflow
 

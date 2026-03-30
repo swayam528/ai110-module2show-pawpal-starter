@@ -115,7 +115,7 @@ Three gaps were found during the design review, before any implementation:
 
 ---
 
-## 2. Scheduling Logic and Tradeoffs
+## 2.Core Implementation 
 
 **a. Constraints and priorities**
 
@@ -139,7 +139,7 @@ This is a reasonable tradeoff for a simple daily planner for two reasons. First,
 
 ## 3. AI Collaboration
 
-**a. How you used AI**
+**a. How I used AI**
 
 AI tools were used at every stage of the project, but the role shifted across phases:
 
@@ -149,11 +149,27 @@ AI tools were used at every stage of the project, but the role shifted across ph
 
 - **Phase 5 (testing):** Used AI to identify edge cases I had not considered, specifically the "completed task should be invisible to conflict detection" case. The prompt "What are the most important edge cases to test for a pet scheduler with recurring tasks and conflict detection?" surfaced that case and the empty-list sorting test.
 
+**Using separate chat sessions per phase** made a significant practical difference. Each new session starts with no accumulated context from prior work, which forced every prompt to be self-contained and specific. In a single long session, earlier design decisions tend to bleed into later suggestions — the AI assumes the current approach is correct and builds on it rather than questioning it. Starting fresh for Phase 3 (algorithms) and again for Phase 5 (testing) meant the AI had no loyalty to earlier design choices, making it easier to get honest feedback like "this conflict check only catches exact matches, not overlaps." It also prevented the context window from filling with irrelevant class skeleton code when asking about test edge cases.
+
 **b. Judgment and verification**
 
 During Phase 3, the AI initially suggested implementing full interval-overlap conflict detection — comparing every pair of tasks using their start time plus duration to find overlaps. The suggested code used a nested loop (O(n²)) and added about 25 lines of interval arithmetic.
 
 I evaluated the suggestion against the actual use case: a pet owner with a handful of daily tasks, most assigned to coarse slots like "morning" or "evening." At that scale, exact same-time matching catches the real problem (accidentally assigning two tasks to "08:00") without the complexity cost. The O(n²) interval check was rejected in favor of the O(n) grouping approach. The tradeoff was documented in reflection.md section 2b so a future developer would understand why the simpler version was a deliberate choice, not an oversight.
+
+**c. AI Collaboration Q&A**
+
+**Q: Which Copilot features were most effective for building your scheduler?**
+
+The most effective feature was targeted prompt-based code generation for specific, well-defined problems. In Phase 1, asking "Given this scenario, what are the distinct responsibilities that should be modeled as separate classes?" produced a clean class breakdown with no wasted suggestions. In Phase 3, a focused prompt about sorting an HH:MM string field with a lambda key returned the exact `int(t[:2]) * 60 + int(t[3:])` conversion — precise and directly usable. In Phase 5, asking for edge cases in a pet scheduler with recurring tasks and conflict detection surfaced the "completed tasks should be invisible to conflict detection" case, which I had missed. In all three phases, the feature that added the most value was the AI's ability to generate a concrete, runnable starting point that I could evaluate and modify, rather than describing an approach in the abstract.
+
+**Q: Give one example of an AI suggestion you rejected or modified to keep your system design clean.**
+
+During Phase 3, the AI suggested implementing full interval-overlap conflict detection using a nested loop — comparing every pair of tasks by start time plus duration to catch partial overlaps. The suggested code was about 25 lines of interval arithmetic and ran in O(n²) time. I rejected it because the actual use case is a pet owner with a small handful of daily tasks assigned to coarse slots like "morning" or "evening." At that scale, exact same-time matching catches the real conflict (two tasks accidentally set to "08:00") without the added complexity. Accepting the AI's suggestion would have made the code harder to read and maintain for a problem that does not exist at this app's scale. The simpler O(n) approach was kept and the tradeoff was documented in section 2b so the decision would not look like an oversight to a future developer.
+
+**Q: How did using separate chat sessions for different phases help you stay organized?**
+
+Each new session started with no accumulated context from prior phases, which forced every prompt to be self-contained and specific. In a single long session, earlier design decisions tend to bleed into later suggestions — the AI assumes the current approach is correct and builds on it rather than questioning it. Starting fresh for Phase 3 (algorithms) and again for Phase 5 (testing) meant the AI had no loyalty to earlier choices, making it easier to get honest feedback like "this conflict check only catches exact matches, not overlaps." It also kept the context window clean: when asking about test edge cases, the session was not cluttered with the full class skeleton code from Phase 1. The discipline of opening a new session per phase mirrored the discipline of keeping the code layers separate — each session had one clear job.
 
 ---
 
