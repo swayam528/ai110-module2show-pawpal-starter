@@ -44,6 +44,26 @@ PawPal+ now includes four algorithmic features that make the daily planner more 
 
 - **Conflict detection** — `Scheduler.get_conflicts()` returns human-readable warnings for three conflict types: (1) two or more tasks requesting the exact same `HH:MM` start time, (2) a pet having multiple pending tasks in the same category (e.g., two "walk" entries), and (3) total pending time exceeding the owner's daily budget. The checker returns warning strings rather than raising exceptions, so the app stays running and the user can decide how to resolve each issue.
 
+## Testing PawPal+
+
+Run the full test suite from the project root:
+
+```bash
+python -m pytest
+```
+
+The suite contains **21 tests** across five areas:
+
+| Area | What is verified |
+|---|---|
+| Task / Pet basics | `mark_complete()` sets `completed=True`; `add_task()` grows the task list |
+| Sorting | Tasks added out of order are returned chronologically; same-hour tasks sort by minute; empty list is handled |
+| Filtering | `filter_tasks()` isolates by pet name, by pending status, by completed status, and returns nothing for a pet with no tasks |
+| Recurring tasks | Daily tasks get a next-day occurrence; weekly tasks get a next-week occurrence; `as-needed` tasks produce no successor; the new task inherits all fields and starts incomplete |
+| Conflict detection | Same-time collisions are flagged; different times produce no warning; duplicate categories are caught; budget overflow is caught; completed tasks are excluded from conflict checks |
+
+**Confidence level: ★★★★☆** — all happy paths and the most likely edge cases are covered. Interval-overlap detection (e.g. a 30-min task at 08:00 overlapping a task at 08:20) and multi-pet scheduling edge cases would be the next things to add.
+
 ### Suggested workflow
 
 1. Read the scenario carefully and identify requirements and edge cases.
