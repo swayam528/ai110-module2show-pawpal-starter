@@ -119,8 +119,13 @@ Three gaps were found during the design review, before any implementation:
 
 **a. Constraints and priorities**
 
-- What constraints does your scheduler consider (for example: time, priority, preferences)?
-- How did you decide which constraints mattered most?
+The scheduler considers three constraints, ordered from hardest to softest:
+
+1. **Time budget (hard constraint).** `available_minutes_per_day` is a strict ceiling — once the running total of scheduled task durations would exceed it, the remaining tasks are deferred rather than squeezed in. This is the most important constraint because it reflects a real-world physical limit: an owner only has so many waking hours.
+
+2. **Priority (medium constraint).** Tasks are sorted high → medium → low before scheduling, so a high-priority medication is placed before a low-priority grooming session even if the grooming was added first. Priority was chosen as the second constraint because missing a medication dose has a direct health consequence, whereas a delayed brushing session does not.
+
+3. **Preferred time of day (soft constraint).** Tasks are first bucketed into morning, afternoon, and evening slots. The scheduler advances its cursor to the start of each slot when it encounters a task that belongs there, but if the cursor has already passed that point the task is placed at the current time rather than being deferred. This keeps the schedule feeling natural without sacrificing the hard budget constraint.
 
 **b. Tradeoffs**
 
@@ -136,13 +141,19 @@ This is a reasonable tradeoff for a simple daily planner for two reasons. First,
 
 **a. How you used AI**
 
-- How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
-- What kinds of prompts or questions were most helpful?
+AI tools were used at every stage of the project, but the role shifted across phases:
+
+- **Phase 1 (design):** Used AI to brainstorm which classes were needed and what responsibilities each should have. The most useful prompt format was "Given this scenario, what are the distinct responsibilities that should be modeled as separate classes?" This produced a clean separation between `Owner` (time budget), `Pet` (task container), `Task` (unit of work), `Scheduler` (logic), and `ScheduledTask` (output wrapper).
+
+- **Phase 3 (algorithms):** Used AI to research `timedelta` for recurring task date arithmetic and to draft the lambda key for `sort_by_time()`. The prompt "How do I sort a list of objects by an HH:MM string field without using datetime.strptime?" produced the `int(t[:2]) * 60 + int(t[3:])` conversion, which is concise and avoids importing `datetime` just for parsing.
+
+- **Phase 5 (testing):** Used AI to identify edge cases I had not considered, specifically the "completed task should be invisible to conflict detection" case. The prompt "What are the most important edge cases to test for a pet scheduler with recurring tasks and conflict detection?" surfaced that case and the empty-list sorting test.
 
 **b. Judgment and verification**
 
-- Describe one moment where you did not accept an AI suggestion as-is.
-- How did you evaluate or verify what the AI suggested?
+During Phase 3, the AI initially suggested implementing full interval-overlap conflict detection — comparing every pair of tasks using their start time plus duration to find overlaps. The suggested code used a nested loop (O(n²)) and added about 25 lines of interval arithmetic.
+
+I evaluated the suggestion against the actual use case: a pet owner with a handful of daily tasks, most assigned to coarse slots like "morning" or "evening." At that scale, exact same-time matching catches the real problem (accidentally assigning two tasks to "08:00") without the complexity cost. The O(n²) interval check was rejected in favor of the O(n) grouping approach. The tradeoff was documented in reflection.md section 2b so a future developer would understand why the simpler version was a deliberate choice, not an oversight.
 
 ---
 
@@ -150,13 +161,17 @@ This is a reasonable tradeoff for a simple daily planner for two reasons. First,
 
 **a. What you tested**
 
-- What behaviors did you test?
-- Why were these tests important?
+The test suite covers 21 behaviors across five areas:
+
+- **Sorting** — tasks added out of order are returned chronologically; same-hour tasks sort by minute; an empty list is handled without error. These matter because the entire UI relies on `sort_by_time()` to display tasks in a readable order.
+- **Filtering** — filtering by pet name returns only that pet's tasks; pending/completed filters exclude the opposite status; a pet with no tasks returns an empty list. These guard the most user-visible feature in the task management section.
+- **Recurring tasks** — daily tasks get a next-day copy; weekly tasks get a next-week copy; `as-needed` tasks produce no successor; the new task starts incomplete and inherits all original fields. Recurring logic is the most stateful feature and the easiest to break silently.
+- **Conflict detection** — same-time collision flagged; different times produce no false positive; duplicate categories caught; budget overflow caught; completed tasks are invisible to the checker. Conflict warnings are only useful if they don't cry wolf, so the false-positive test is as important as the true-positive tests.
+- **Schedule generation** — total scheduled duration never exceeds the budget; tasks that don't fit land in `excluded`. These confirm the core scheduling invariant.
 
 **b. Confidence**
 
-- How confident are you that your scheduler works correctly?
-- What edge cases would you test next if you had more time?
+**★★★★☆ (4/5).** All 21 tests pass and the cases cover the main happy paths and edge cases a real user would encounter. The missing star reflects two gaps: (1) interval-overlap detection is not tested because it is not implemented, so two tasks that overlap by duration (not exact time) would go undetected; (2) there are no tests for the Streamlit UI layer — the `app.py` wiring is verified only by manual inspection. If more time were available, the next tests would be: a multi-pet conflict (same time across two different pets), an owner with zero minutes available, and a task whose duration exactly equals the remaining budget.
 
 ---
 
@@ -164,12 +179,12 @@ This is a reasonable tradeoff for a simple daily planner for two reasons. First,
 
 **a. What went well**
 
-- What part of this project are you most satisfied with?
+The cleanest part of the project is the separation between the logic layer (`pawpal_system.py`) and the display layer (`app.py`). Every algorithmic method — sorting, filtering, conflict detection, recurring task creation — lives entirely in `Scheduler` and can be tested without Streamlit running at all. This made Phase 5 straightforward: 21 tests could be written against plain Python objects with no mocking required. Starting from a clear UML diagram in Phase 1 made it easy to keep that separation intact as the system grew.
 
 **b. What you would improve**
 
-- If you had another iteration, what would you improve or redesign?
+The `Task.time` field is currently a plain string (`"08:00"`). This works for sorting and display, but it means the app trusts the user to enter a valid 24-hour time and has no validation if they type `"8:00"` or `"25:00"`. In the next iteration I would store time as a `datetime.time` object internally and only convert it to a string for display. That would also enable true interval-overlap detection, because you could compare `time + timedelta(minutes=duration)` to find genuine overlaps rather than only exact-time collisions.
 
 **c. Key takeaway**
 
-- What is one important thing you learned about designing systems or working with AI on this project?
+The most important lesson was that AI tools are strongest when you already have a clear problem statement and a design in mind. When I asked vague questions ("help me write a scheduler") the suggestions were generic and needed heavy editing. When I asked specific questions ("how do I sort a list of dataclass objects by an HH:MM string field using a lambda key") the output was precise and directly usable. The lead architect's job is not to write every line — it is to stay clear on what the system should do so that AI suggestions can be evaluated quickly and either accepted, modified, or rejected with a reason.

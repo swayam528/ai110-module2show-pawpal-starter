@@ -32,6 +32,19 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+## Features
+
+| Feature | Description |
+|---|---|
+| **Multi-pet support** | Register any number of pets under one owner; each pet has its own task list |
+| **Task management** | Add tasks with title, duration, priority (high/medium/low), category, frequency, preferred time of day, and a specific HH:MM start time |
+| **Sorting by time** | All tasks are displayed in chronological order using a lambda key that converts HH:MM strings to minutes-since-midnight for correct numeric comparison |
+| **Filtering** | Filter the task list by pet name and/or completion status (pending / completed) |
+| **Daily schedule generation** | Greedy scheduler fits pending tasks within the owner's daily time budget, ordered by preferred time slot → priority → title |
+| **Conflict warnings** | Detects same-time collisions, duplicate task categories per pet, and budget overflow — shown as colour-coded alerts before schedule generation |
+| **Recurring tasks** | Marking a daily task done auto-creates the next occurrence for tomorrow; weekly tasks reappear in 7 days; one-off tasks simply close out |
+| **Deferred task report** | Tasks that don't fit in the budget are listed separately with the reason they were skipped |
+
 ## Smarter Scheduling
 
 PawPal+ now includes four algorithmic features that make the daily planner more intelligent:
